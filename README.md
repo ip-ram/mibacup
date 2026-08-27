@@ -4,7 +4,3 @@ of course you can use this whatever you want
 ```
 mibacup <frequency> <from> <to>
 ```
-
-
-```
-```
