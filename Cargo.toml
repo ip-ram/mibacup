@@ -2,6 +2,9 @@
 name = "mibacup"
 version = "0.1.0"
 edition = "2024"
+description = "Simple periodic backup utility"
+license = "GPL-3.0"
+repository = "https://github.com/ip-ram/mibacup.git"
 
 [dependencies]
 fs_extra = "1.3"
