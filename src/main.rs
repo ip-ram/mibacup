@@ -1,4 +1,6 @@
-mod backup;
+mod input;
+
+mod input;
 use backup::BackupConfig;
 
 use std::env::{self};
