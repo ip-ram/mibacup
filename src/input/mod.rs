@@ -1,3 +1,5 @@
+use chrono::format::Item;
+
 #[derive(Clone, Copy)]
 enum TimeUnit {
     Minute(u8),
@@ -140,73 +142,109 @@ impl Config {
         self.verify = verify;
     }
 
+    fn parse_frequency(
+        &mut self,
+        args: &mut dyn Iterator<Item = String>,
+    ) -> Result<(), &'static str> {
+        match args.next() {
+            Some(time_unit) => {
+                let frequency: u8 = args.next().unwrap().parse().unwrap();
+                match time_unit.as_str() {
+                    "-m" | "--minutes" => Ok(self.set_frequency(TimeUnit::Minute(frequency))),
+                    "-h" | "--hours" => Ok(self.set_frequency(TimeUnit::Hour(frequency))),
+                    "-d" | "--day" => Ok(self.set_frequency(TimeUnit::Day(frequency))),
+                    "-M" | "--month" => Ok(self.set_frequency(TimeUnit::Month(frequency))),
+                    "-y" | "--year" => Ok(self.set_frequency(TimeUnit::Year(frequency))),
+                    &_ => Ok(self.set_frequency(TimeUnit::Minute(frequency))),
+                }
+            }
+            None => {
+                return Err("[ERROR] No frequency time set. Default time unit is minutes");
+            }
+        }
+    }
+
+    fn parse_remocal_frequency(
+        &mut self,
+        args: &mut dyn Iterator<Item = String>,
+    ) -> Result<(), &'static str> {
+        match args.next() {
+            Some(time_unit) => {
+                let removal_frequency: u8 = args.next().unwrap().parse().unwrap();
+                match time_unit.as_str() {
+                    "-m" | "--minutes" => {
+                        Ok(self.set_removal_frequency(TimeUnit::Minute(removal_frequency)))
+                    }
+                    "-h" | "--hours" => {
+                        Ok(self.set_removal_frequency(TimeUnit::Hour(removal_frequency)))
+                    }
+                    "-d" | "--day" => {
+                        Ok(self.set_removal_frequency(TimeUnit::Day(removal_frequency)))
+                    }
+                    "-M" | "--month" => {
+                        Ok(self.set_removal_frequency(TimeUnit::Month(removal_frequency)))
+                    }
+                    "-y" | "--year" => {
+                        Ok(self.set_removal_frequency(TimeUnit::Year(removal_frequency)))
+                    }
+                    &_ => Ok(self.set_removal_frequency(TimeUnit::Minute(removal_frequency))),
+                }
+            }
+            None => {
+                return Err("[ERROR]:no removal frequency time set. Default time unit is minutes");
+            }
+        }
+    }
+
+    fn parse_source_file(
+        &mut self,
+        args: &mut dyn Iterator<Item = String>,
+    ) -> Result<(), &'static str> {
+        match args.next() {
+            Some(source_path) => Ok(self.set_source_path(source_path)),
+            None => Err(
+                "[ERROR]:no source path set. Default source path is './'. You can add several different directories",
+            ),
+        }
+    }
+
     pub fn env2conf(mut args: impl Iterator<Item = String>) -> Result<Config, &'static str> {
         // make basik config
-        let mut config = Config {
-            frequency: TimeUnit::Minute(1),
-            removal_frequency: TimeUnit::Minute(1),
-            backup_path: Vec::new(),
-            recursive: false,
-            incremental: IncrementalMethod::None,
-            compression: CompressionMethod::Gzip,
-            verify: false,
-            configuration_file: String::new(),
-            source_path: Vec::new(),
-            exclude_path: Vec::new(),
-            list: false,
-            help: false,
-        };
+        let mut config = Config::new(
+            TimeUnit::Minute(1),
+            TimeUnit::Minute(1),
+            String::new(),
+            Vec::new(),
+            Vec::new(),
+            Vec::new(),
+            false,
+            IncrementalMethod::None,
+            CompressionMethod::None,
+            false,
+            false,
+            false,
+        );
 
         //skip unneeded parameter
         args.next();
 
         while let Some(arg) = args.next() {
             match arg.as_str() {
-                "--frequency" | "-f" => match args.next() {
-                    Some(time_unit) => {
-                        let frequency: u8 = args.next().unwrap().parse().unwrap();
-                        match time_unit.as_str() {
-                            "-m" | "--minutes" => config.set_frequency(TimeUnit::Minute(frequency)),
-                            "-h" | "--hours" => config.set_frequency(TimeUnit::Hour(frequency)),
-                            "-d" | "--day" => config.set_frequency(TimeUnit::Day(frequency)),
-                            "-M" | "--month" => config.set_frequency(TimeUnit::Month(frequency)),
-                            "-y" | "--year" => config.set_frequency(TimeUnit::Year(frequency)),
-                            &_ => config.set_frequency(TimeUnit::Minute(frequency)),
-                        }
-                    }
-                    None => {
-                        return Err("[ERROR] No frequency time set. Default time unit is minutes");
-                    }
+                "--frequency" | "-f" => match config.parse_frequency(&mut args) {
+                    Ok(_) => (),
+                    Err(str) => return Err(&str),
+                },
+                "--frequency-removal" | "-F" => match config.parse_remocal_frequency(&mut args) {
+                    Ok(_) => (),
+                    Err(str) => return Err(&str),
+                },
+                "--source" | "-s" => match config.parse_source_file(&mut args) {
+                    Ok(_) => (),
+                    Err(str) => return Err(&str),
                 },
                 &_ => return Err(""),
             }
         }
         Ok(config)
     }
-    // pub fn env2conf(mut args: impl Iterator<Item = String>) -> Result<BackupConfig, &'static str> {
-    //     //skip unneeded parameter
-    //     args.next();
-    //
-    //     let frequency: u64 = match args.next() {
-    //         Some(freq) => freq.trim().parse().unwrap(),
-    //         None => return Err("no frequency set"),
-    //     };
-    //
-    //     let data_dir: String = match args.next() {
-    //         Some(str) => str,
-    //         None => return Err("no data dir set"),
-    //     };
-    //
-    //     let backup_path: String = match args.next() {
-    //         Some(str) => str,
-    //         None => return Err("no backupdir set"),
-    //     };
-    //
-    //     let conf = BackupConfig {
-    //         frequency,
-    //         data_dir,
-    //         backup_path,
-    //     };
-    //     Ok(conf)
-    // }
 }
