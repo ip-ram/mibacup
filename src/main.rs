@@ -1,7 +1,5 @@
 mod input;
-
-mod input;
-use backup::BackupConfig;
+use input::Config;
 
 use std::env::{self};
 
@@ -17,7 +15,7 @@ use chrono::Local;
 fn main() {
     let args = env::args();
 
-    let _conf = match BackupConfig::env2conf(args) {
+    let _conf = match Config::env2conf(args) {
         Ok(conf) => match run(&conf) {
             Ok(str) => Ok(str),
             Err(err) => Err(err),
@@ -26,7 +24,7 @@ fn main() {
     };
 }
 
-pub fn run(conf: &BackupConfig) -> Result<&'static str, std::io::Error> {
+pub fn run(conf: &Config) -> Result<&'static str, std::io::Error> {
     let interval = Duration::from_secs(conf.get_frequency());
     let mut next_run = Instant::now();
 
