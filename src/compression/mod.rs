@@ -7,11 +7,9 @@ pub fn compress_dir_gzip(
     date: &str,
 ) -> Result<Vec<String>> {
     let mut status: Vec<String> = Vec::new();
-
     for source_directory in source_directory_list {
         let source_directory = source_directory.as_ref().to_str().unwrap();
         let filename = format!("{}.tar.gz", date);
-
         match std::fs::File::create(filename) {
             Ok(file) => {
                 let encoder = flate2::write::GzEncoder::new(file, flate2::Compression::default());

@@ -19,6 +19,9 @@ use std::env::{self};
 //Prelde
 pub mod prelude;
 
+//Help tip
+mod help;
+
 fn main() {
     let mut args = env::args();
     match Config::env2conf(&mut args) {
@@ -30,8 +33,12 @@ fn main() {
 // TODO: Make the function functional
 // 1. Reading the config
 // 2. Making a decision depending on the config
-fn run(conf: Config) {
-    let interval = Duration::from_secs(*conf.get_frequency_time());
+fn run(config: Config) {
+    if config.get_help() {
+        println!("{}", help::HELP);
+        return;
+    }
+    let interval = Duration::from_secs(*config.get_frequency_time());
     let mut next_run = Instant::now();
 
     loop {
