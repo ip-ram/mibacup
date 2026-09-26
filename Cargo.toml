@@ -1,11 +1,15 @@
 [package]
 name = "mibackup"
-version = "0.1.0"
+version = "0.9.0"
 edition = "2024"
-description = "Simple periodic backup utility"
+description = "Simple backup utility"
 license = "GPL-3.0"
 repository = "https://github.com/ip-ram/mibacup.git"
 
 [dependencies]
+flate2 = "1.0"
+tar = "0.4"
 fs_extra = "1.3"
 chrono = "0.4"
+zstd = "0.13"
+anyhow = "1"

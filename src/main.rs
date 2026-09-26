@@ -1,31 +1,37 @@
-mod input;
-use input::Config;
+//self modules
+mod archiving;
+mod compression;
+mod config;
+mod copy;
+mod log;
+use config::Config;
 
-use std::env::{self};
-
+//Thread modles
 use std::thread;
+
+//Time modules
+use chrono::Local;
 use std::time::{Duration, Instant};
 
-use fs_extra::dir::{CopyOptions, copy};
-use std::fs;
-use std::io::Write;
+//ENV modules
+use std::env::{self};
 
-use chrono::Local;
+//Prelde
+pub mod prelude;
 
 fn main() {
-    let args = env::args();
-
-    let _conf = match Config::env2conf(args) {
-        Ok(conf) => match run(&conf) {
-            Ok(str) => Ok(str),
-            Err(err) => Err(err),
-        },
-        Err(str) => panic!("{str}"),
+    let mut args = env::args();
+    match Config::env2conf(&mut args) {
+        Ok(conf) => run(conf),
+        Err(str) => panic!("{}", str),
     };
 }
 
-pub fn run(conf: &Config) -> Result<&'static str, std::io::Error> {
-    let interval = Duration::from_secs(conf.get_frequency());
+// TODO: Make the function functional
+// 1. Reading the config
+// 2. Making a decision depending on the config
+fn run(conf: Config) {
+    let interval = Duration::from_secs(*conf.get_frequency_time());
     let mut next_run = Instant::now();
 
     loop {
@@ -38,54 +44,5 @@ pub fn run(conf: &Config) -> Result<&'static str, std::io::Error> {
         next_run += interval;
 
         let date = Local::now().to_string();
-
-        let _result = match backup_dir(conf.get_data_dir(), conf.get_backup_dir(), &date) {
-            Ok(status) => match print_log_in_log_dir(conf.get_backup_dir(), status, &date) {
-                Ok(str) => Ok(str),
-                Err(err) => Err(err),
-            },
-            Err(status) => {
-                match print_log_in_log_dir(conf.get_backup_dir(), &status.to_string(), &date) {
-                    Ok(str) => Ok(str),
-                    Err(err) => Err(err),
-                }
-            }
-        };
-    }
-}
-
-fn backup_dir(
-    from: String,
-    to: String,
-    date: &str,
-) -> Result<&'static str, fs_extra::error::Error> {
-    let mut options = CopyOptions::new();
-    options.copy_inside = true;
-
-    let to = format!("{}/{}", to, date);
-
-    match copy(from, to, &options) {
-        Result::Ok(_int) => Ok("backup success"),
-        Result::Err(err) => Err(err),
-    }
-}
-
-fn print_log_in_log_dir(
-    to: String,
-    log_text: &str,
-    date: &str,
-) -> Result<&'static str, std::io::Error> {
-    let backup_dir = to;
-    let log_path = format!("{}{}", backup_dir, "/log.txt");
-    let mut file = fs::OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open(log_path)
-        .unwrap();
-
-    let log_output = format!("{}, {}", date, log_text);
-    match writeln!(file, " {log_output}") {
-        Ok(_) => Ok("success"),
-        Err(err) => Err(err),
     }
 }

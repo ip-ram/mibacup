@@ -1,6 +1,5 @@
-use chrono::format::Item;
+use crate::prelude::*;
 
-#[derive(Clone, Copy)]
 enum TimeUnit {
     Minute(),
     Hour(),
@@ -10,80 +9,64 @@ enum TimeUnit {
     Year(),
 }
 
-enum CompressionMethod {
+pub enum CompressionMethod {
     Gzip,
     Zstd,
-    None,
 }
 
 impl CompressionMethod {
-    fn get_compression_method(&self) -> &Self {
+    pub fn get_compression_method(&self) -> &Self {
         self
     }
 }
 
-enum IncrementalMethod {
+pub enum IncrementalMethod {
     Full,
     Incremental,
     Differential,
-    None,
 }
 
 impl IncrementalMethod {
-    fn get_incremental_method(&self) -> &Self {
+    pub fn get_incremental_method(&self) -> &Self {
         self
     }
 }
 
 pub struct Config {
-    frequency: TimeUnit,            // Единица измерения частоты создания
-    removal_frequency: TimeUnit,    // Единица измерения частоты бекапов
-    frequency_time: u64, // Частота создания бекапа
-    removal_frequency_time: u64, // Частота удаления бекапа
-    configuration_file: String,     // Файл конфигурации
-    source_path: Vec<String>,       // Файлы которые нужно бекапить
-    exclude_path: Vec<String>,      // Файлы с конфигур которые не нужно бекапить
-    backup_path: Vec<String>,       // Директория для бекапа
-    recursive: bool,                // Рекурсивный бекап для папок
-    incremental: IncrementalMethod, // Метод инкрементации
-    compression: CompressionMethod, // Метод компрессии
-    list: bool,                     // Вывод информации по бекапам
-    verify: bool,                   // Проверка на поврежденность файла
+    frequency: TimeUnit,                    // Единица измерения частоты создания
+    removal_frequency: TimeUnit,            // Единица измерения частоты бекапов
+    frequency_time: u64,                    // Частота создания бекапа
+    removal_frequency_time: u64,            // Частота удаления бекапа
+    configuration_file: String,             // Файл конфигурации
+    source_path: Vec<String>,               // Файлы которые нужно бекапить
+    exclude_path: Vec<String>,              // Файлы с конфигур которые не нужно бекапить
+    backup_path: Vec<String>,               // Директория для бекапа
+    recursive: bool,                        // Рекурсивный бекап для папок
+    incremental: Option<IncrementalMethod>, // Метод инкрементации
+    compression: Option<CompressionMethod>, // Метод компрессии
+    list: bool,                             // Вывод информации по бекапам
+    verify: bool,                           // Проверка на поврежденность файла
     help: bool,
 }
 
 impl Config {
-    pub fn new(
-        frequency: TimeUnit,
-        removal_frequency: TimeUnit,
-        frequency_time: u64,
-        removal_frequency_time: u64,
-        configuration_file: String,
-        source_path: Vec<String>,
-        exclude_path: Vec<String>,
-        backup_path: Vec<String>,
-        recursive: bool,
-        incremental: IncrementalMethod,
-        compression: CompressionMethod,
-        list: bool,
-        verify: bool,
-        help: bool,
-    ) -> Config {
+    pub fn new() -> Config {
+        // TODO: add flag: log print, log write, simple log
         Config {
-            frequency,
-            removal_frequency,
-            configuration_file,
-            frequency_time,
-            removal_frequency_time,
-            source_path,
-            exclude_path,
-            backup_path,
-            recursive,
-            incremental,
-            compression,
-            list,
-            verify,
-            help,
+            frequency: TimeUnit::Minute(),
+            removal_frequency: TimeUnit::Minute(),
+            frequency_time: 1,
+            removal_frequency_time: 1,
+            configuration_file: String::new(),
+            source_path: Vec::new(),
+            exclude_path: Vec::new(),
+            backup_path: Vec::new(),
+            recursive: false,
+            incremental: Option::None,
+            compression: Option::None,
+            list: false,
+            verify: false,
+            help: false,
         }
     }
     // getter
@@ -99,22 +82,27 @@ impl Config {
     pub fn get_removal_frequency_time(&self) -> &u64 {
         &self.removal_frequency_time
     }
-    pub fn get_source_path(&self) -> &Vec<String> {
-        &self.source_path
+    pub fn get_source_path(&self) -> String {
+        let source_path_array = &self.source_path;
+        let sources: String = source_path_array.join("\n");
+        sources
     }
-    pub fn get_exclude_path(&self) -> &Vec<String> {
-        &self.exclude_path
+    pub fn get_exclude_path(&self) -> String {
+        let exlude_path_array = &self.exclude_path;
+        let exludes: String = exlude_path_array.join("\n");
+        exludes
     }
+
     pub fn get_backup_path(&self) -> &Vec<String> {
         &self.backup_path
     }
     pub fn get_is_recursive(&self) -> bool {
         self.recursive
     }
-    pub fn get_incremental_method(&self) -> &IncrementalMethod {
+    pub fn get_incremental_method(&self) -> &Option<IncrementalMethod> {
         &self.incremental
     }
-    pub fn get_compression_method(&self) -> &CompressionMethod {
+    pub fn get_compression_method(&self) -> &Option<CompressionMethod> {
         &self.compression
     }
     pub fn get_list(&self) -> bool {
@@ -169,19 +157,19 @@ impl Config {
     }
     pub fn set_incremental_method(&mut self, incremental_method: String) {
         match incremental_method.as_str() {
-               "Full" => self.incremental = IncrementalMethod::Full,
-               "Incr" => self.incremental = IncrementalMethod::Incremental,
-               "Diff" => self.incremental = IncrementalMethod::Differential,
-               "None" => self.incremental = IncrementalMethod::None,
-            _ => ()
+            "Full" => self.incremental = Option::Some(IncrementalMethod::Full),
+            "Incr" => self.incremental = Option::Some(IncrementalMethod::Incremental),
+            "Diff" => self.incremental = Option::Some(IncrementalMethod::Differential),
+            "None" => self.incremental = Option::None,
+            _ => (),
         }
     }
     pub fn set_compression_method(&mut self, compression_method: String) {
         match compression_method.as_str() {
-            "Gzip" => self.compression = CompressionMethod::Gzip,
-            "Zstd" => self.compression = CompressionMethod::Zstd,
-            "None" => self.compression = CompressionMethod::None,
-            _ => ()
+            "Gzip" => self.compression = Option::Some(CompressionMethod::Gzip),
+            "Zstd" => self.compression = Option::Some(CompressionMethod::Zstd),
+            "None" => self.compression = Option::None,
+            _ => (),
         }
     }
     pub fn set_list(&mut self, list: bool) {
@@ -209,33 +197,13 @@ impl Config {
         }
     }
 
-    fn parse_no_element_function(
-        &mut self,
-        parser: fn(&mut Self, bool)
-    ) {
+    fn parse_no_element_function(&mut self, parser: fn(&mut Self, bool)) {
         parser(self, true)
     }
 
-    pub fn env2conf(
-        args: &mut dyn Iterator<Item = String>,
-    ) -> Result<Config, &'static str> {
+    pub fn env2conf(args: &mut impl Iterator<Item = String>) -> Result<Config, &'static str> {
         // make basik config
-        let mut config = Config::new(
-            TimeUnit::Minute(),
-            TimeUnit::Minute(),
-            1,
-            1,
-            String::new(),
-            Vec::new(),
-            Vec::new(),
-            Vec::new(),
-            false,
-            IncrementalMethod::None,
-            CompressionMethod::None,
-            false,
-            false,
-            false,
-        );
+        let mut config = Config::new();
 
         //skip unneeded paramete
         args.next();
@@ -243,7 +211,7 @@ impl Config {
         while let Some(arg) = args.next() {
             match arg.as_str() {
                 "--frequency" | "-f" => config.parser_function(
-                    args, 
+                    args,
                     Config::set_removal_frequency_time,
                     "[ERROR]:no frequency time set. Default frequency time is 1 minute. You can change frequency time unit with help '-F'"
                 )?,
@@ -264,7 +232,7 @@ impl Config {
                 )?,
                 "--source" | "-s" => config.parser_function(
                     args,
-                    Config::set_source_path, 
+                    Config::set_source_path,
                     "[ERROR]:no source path set. Default source path is './'. You can add several different directories."
                 )?,
                 "--exclude" | "-e" => config.parser_function(
@@ -281,13 +249,13 @@ impl Config {
                     Config::set_recursive
                 ),
                 "--incremential_method" | "-i" => config.parser_function(
-                    args, 
-                    Config::set_incremental_method, 
+                    args,
+                    Config::set_incremental_method,
                     "[ERROR]:no incremential method set. Default incremential method is gzip. You can choose:\nfull\nincremental\ndifferential\nnone"
                 )?,
                 "--compression_method" | "-c" => config.parser_function(
-                    args, 
-                    Config::set_compression_method, 
+                    args,
+                    Config::set_compression_method,
                     "[ERROR]:no compression method set. Default compression method is none. You can choose:\ngzip\nzstd\nnone"
                 )?,
                 "--list" | "-l" => config.parse_no_element_function(
@@ -297,7 +265,7 @@ impl Config {
                     Config::set_verify
                 ),
                 "--help" | "-h" => config.parse_no_element_function(Config::set_help),
-                _ => return Err(""),
+                _ => (),
             }
         }
         Ok(config)
